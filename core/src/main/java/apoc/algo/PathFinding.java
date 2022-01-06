@@ -1,5 +1,7 @@
 package apoc.algo;
 
+import apoc.algo.tabby.AllSimplePathsFinder;
+import apoc.algo.tabby.TabbyPathExpander;
 import apoc.path.RelationshipTypeAndDirections;
 import apoc.result.PathResult;
 import apoc.result.WeightedPathResult;
@@ -102,6 +104,26 @@ public class PathFinding {
         );
         Iterable<Path> allPaths = algo.findAllPaths(startNode, endNode);
         return StreamSupport.stream(allPaths.spliterator(), false)
+                .map(PathResult::new);
+    }
+
+
+    @Procedure
+    @Description("apoc.algo.tabbyPathFinder(sinkNode, sourceNode, 5) YIELD path, " +
+            "weight - run allSimplePaths with maxNodes")
+    public Stream<PathResult> tabbyPathFinder(
+            @Name("sinkNode") Node startNode,
+            @Name("sourceNode") Node endNode,
+            @Name("maxNodes") long maxNodes) {
+
+        PathFinder<Path> algo = new AllSimplePathsFinder(
+                new BasicEvaluationContext(tx, db),
+                TabbyPathExpander.newInstance(),
+                (int) maxNodes
+        );
+
+        Iterable<Path> allPaths = algo.findAllPaths(startNode, endNode);
+        return StreamSupport.stream(allPaths.spliterator(), true)
                 .map(PathResult::new);
     }
 
